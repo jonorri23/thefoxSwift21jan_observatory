@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase, FoxEvent, FoxSession, subscribeToSession, PreprocessingInfo, RawData } from "@/lib/supabase";
+import { supabase, FoxEvent, FoxSession, subscribeToSession, PreprocessingInfo, RawData, CandidateData } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -12,6 +12,7 @@ interface PipelinePayload {
     prompt_persona?: string;
     prompt_lyricism?: number;
     user_history_tags?: string[];
+    candidates?: CandidateData[];
     preprocessing?: PreprocessingInfo;
     raw_data?: RawData;
 }
@@ -312,6 +313,43 @@ export default function SessionDetailPage() {
                                                                 <span key={tag} style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                                                                     {tag}
                                                                 </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Candidates Layer (NEW) */}
+                                                {payload.candidates && payload.candidates.length > 0 && (
+                                                    <div style={{ marginBottom: '1rem' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                                                            <span>Candidates Layer ({payload.candidates.length})</span>
+                                                            <span>Score / Dist</span>
+                                                        </div>
+                                                        <div style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', maxHeight: '200px', overflowY: 'auto' }}>
+                                                            {payload.candidates.map((cand, idx) => (
+                                                                <div key={cand.id || idx} style={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    marginBottom: '4px',
+                                                                    padding: '4px',
+                                                                    fontSize: '0.7rem',
+                                                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                                    background: idx === 0 ? 'rgba(59, 130, 246, 0.15)' : 'transparent', // Highlight winner
+                                                                    borderRadius: '4px'
+                                                                }}>
+                                                                    <div style={{ flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
+                                                                        <div style={{ fontWeight: idx === 0 ? '600' : '400', color: idx === 0 ? 'var(--accent-blue)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                            {cand.title}
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                                                            {cand.source?.includes('MapKit') ? '🗺️' : '📖'} {cand.type}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'right', minWidth: '60px' }}>
+                                                                        <div style={{ color: 'var(--accent-blue)', fontWeight: '500' }}>{cand.score.toFixed(2)}</div>
+                                                                        <div style={{ color: 'var(--text-muted)' }}>{Math.round(cand.distance)}m</div>
+                                                                    </div>
+                                                                </div>
                                                             ))}
                                                         </div>
                                                     </div>

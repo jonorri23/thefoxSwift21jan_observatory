@@ -75,6 +75,7 @@ export interface FoxEvent {
         prompt_persona?: string;
         prompt_lyricism?: number;
         user_history_tags?: string[];
+        candidates?: CandidateData[];
         preprocessing?: PreprocessingInfo;
         raw_data?: RawData;
     } | null;
