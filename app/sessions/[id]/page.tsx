@@ -304,6 +304,28 @@ export default function SessionDetailPage() {
                                                     </div>
                                                 </div>
 
+                                                {/* Location Context (NEW) */}
+                                                {payload.raw_data?.geocode && (
+                                                    <div style={{ marginBottom: '1rem', padding: '0.5rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Location Context</div>
+                                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                            {[
+                                                                payload.raw_data.geocode.country,
+                                                                payload.raw_data.geocode.city,
+                                                                payload.raw_data.geocode.district,
+                                                                payload.raw_data.geocode.street
+                                                            ].filter(Boolean).map((val, i) => (
+                                                                <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                                                                    {i > 0 && <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>›</span>}
+                                                                    <span style={{ fontSize: '0.8rem', fontWeight: i === 1 || i === 3 ? '500' : '400', color: i === 1 ? 'var(--accent-blue)' : 'inherit' }}>
+                                                                        {val}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* User History Tags */}
                                                 {payload.user_history_tags && payload.user_history_tags.length > 0 && (
                                                     <div style={{ marginBottom: '1rem' }}>
