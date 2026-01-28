@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase, FoxEvent, FoxSession } from "@/lib/supabase";
+import { useEffect, useState, useCallback } from "react";
+import { supabase, FoxEvent, FoxSession, subscribeToSession, PreprocessingInfo, RawData } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -12,6 +12,8 @@ interface PipelinePayload {
     prompt_persona?: string;
     prompt_lyricism?: number;
     user_history_tags?: string[];
+    preprocessing?: PreprocessingInfo;
+    raw_data?: RawData;
 }
 
 interface Candidate {
@@ -37,12 +39,31 @@ export default function SessionDetailPage() {
     const [session, setSession] = useState<FoxSession | null>(null);
     const [events, setEvents] = useState<FoxEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isLive, setIsLive] = useState(false);
+
+    // Callback for new events from realtime
+    const handleNewEvent = useCallback((event: FoxEvent) => {
+        setEvents(prev => [event, ...prev]);
+    }, []);
 
     useEffect(() => {
         if (id) {
             fetchSessionDetails(id as string);
         }
     }, [id]);
+
+    // Setup realtime subscription when session is active
+    useEffect(() => {
+        if (!session || session.ended_at) return;
+
+        setIsLive(true);
+        const channel = subscribeToSession(session.id, handleNewEvent);
+
+        return () => {
+            channel.unsubscribe();
+            setIsLive(false);
+        };
+    }, [session, handleNewEvent]);
 
     async function fetchSessionDetails(sessionId: string) {
         const { data: sessionData } = await supabase
@@ -113,11 +134,11 @@ export default function SessionDetailPage() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                     <div className={`live-indicator ${session.ended_at ? '' : ''}`} style={session.ended_at ? { background: 'var(--bg-tertiary)', color: 'var(--text-muted)' } : {}}>
-                        {!session.ended_at && <span className="live-dot"></span>}
-                        {session.ended_at ? 'Ended' : 'Active'}
+                        {isLive && <span className="live-dot"></span>}
+                        {session.ended_at ? 'Ended' : isLive ? 'LIVE' : 'Active'}
                     </div>
                     <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {events.length} pipeline events
+                        {events.length} pipeline events {isLive && '• Streaming'}
                     </div>
                 </div>
             </div>
@@ -293,6 +314,34 @@ export default function SessionDetailPage() {
                                                                 </span>
                                                             ))}
                                                         </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Preprocessing Info (NEW) */}
+                                                {payload.preprocessing && (
+                                                    <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-purple)', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                                            🧠 Preprocessing {payload.preprocessing.enabled ? 'Active' : 'Disabled'}
+                                                        </div>
+                                                        {payload.preprocessing.model && (
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                                                                Model: <span style={{ color: 'var(--accent-purple)' }}>{payload.preprocessing.model}</span>
+                                                                {payload.preprocessing.latency_ms && ` • ${payload.preprocessing.latency_ms}ms`}
+                                                            </div>
+                                                        )}
+                                                        {payload.preprocessing.original_prose && (
+                                                            <details style={{ marginTop: '0.5rem' }}>
+                                                                <summary style={{ fontSize: '0.7rem', cursor: 'pointer', color: 'var(--text-muted)' }}>Original vs Synthesized</summary>
+                                                                <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.5rem' }}>
+                                                                    <div style={{ fontSize: '0.65rem', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                                                                        <strong>Original:</strong> {payload.preprocessing.original_prose?.slice(0, 200)}...
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.65rem', padding: '0.5rem', background: 'rgba(139, 92, 246, 0.2)', borderRadius: '4px' }}>
+                                                                        <strong>Synthesized:</strong> {payload.preprocessing.synthesized_prose?.slice(0, 200)}...
+                                                                    </div>
+                                                                </div>
+                                                            </details>
+                                                        )}
                                                     </div>
                                                 )}
 
