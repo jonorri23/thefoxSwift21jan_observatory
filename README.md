@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Observatory — Fox Analytics
+
+The Observatory is a standalone debugging and analytics dashboard for [The Fox](https://github.com/jonorri/thefox_xcode2) AI audio guide. It visualizes the entire decision-making pipeline, from GPS location to content candidate scoring and final LLM execution.
+
+![Observatory Screenshot](https://via.placeholder.com/800x400?text=Observatory+Dashboard)
+
+## Features
+
+- **🔭 Pipeline Visualization**: See exactly why The Curator selected specific content. View all candidates, their scores, and distance metrics.
+- **⚡️ Real-time Feed**: Watch events stream in live via Supabase Realtime as users (or simulators) move through the world.
+- **🧬 Session Inspection**: Deep dive into individual sessions. See device info, app version, and the exact configuration (persona, lyricism weights) used.
+- **🧠 Brain Debugging**: Inspect the raw context and prompt payload sent to Gemini.
 
 ## Getting Started
 
-First, run the development server:
+The Observatory is a standard **Next.js** application. You can run it entirely independently of the iOS codebase.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Node.js 18+
+- npm or yarn
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Navigate to the project directory:**
+   ```bash
+   cd observatory
+   ```
 
-## Learn More
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. **Environment Setup:**
+   Ensure you have a `.env.local` file with your Supabase credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+   *(Note: These are pre-configured in the repository for the dev environment)*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Run Development Server:**
+   ```bash
+   npm run dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. **Open Dashboard:**
+   Visit [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **`/app`**: Next.js App Router pages
+  - **`page.tsx`**: Sessions list & Stats
+  - **`sessions/[id]/page.tsx`**: Single session detail (Timeline)
+  - **`events/page.tsx`**: Real-time event feed
+  - **`globals.css`**: Global styles & CSS variables
+- **`/lib`**: Shared utilities
+  - **`supabase.ts`**: Supabase client & TypeScript types
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Data Model
+
+The dashboard reads from two main Supabase tables:
+
+1. **`fox_sessions`**:
+   - `id`: Session UUID
+   - `started_at` / `ended_at`
+   - `settings`: JSON blob of Voice Persona, Lyricism, and Scoring Weights
+
+2. **`fox_events`**:
+   - `event_type`: `pipeline`, `user_feedback`, `error`
+   - `candidates`: JSON array of all scored content items
+   - `winner_*`: Details about the selected content
+   - `payload`: Rich metadata including POI count and Gemini context preview
+
+## Working with Antigravity
+
+This project is designed to be worked on simultaneously with the iOS app. You can open `observatory/` as a root folder in your editor to focus purely on dashboard features.
