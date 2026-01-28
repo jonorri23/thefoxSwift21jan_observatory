@@ -342,7 +342,7 @@ export default function SessionDetailPage() {
                                                                             {cand.title}
                                                                         </div>
                                                                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                                                                            {cand.source?.includes('MapKit') ? '🗺️' : '📖'} {cand.type}
+                                                                            {cand.source === 'apple_maps' ? '🗺️' : '📖'} {cand.type}
                                                                         </div>
                                                                     </div>
                                                                     <div style={{ textAlign: 'right', minWidth: '60px' }}>
